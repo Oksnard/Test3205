@@ -11,7 +11,9 @@ export const useActiveJobStore = defineStore('activeJob', () => {
   const activeJobId = ref<string | null>(null);
   const jobDetail = ref<JobDetail | null>(null);
   const loading = ref(false);
+  const cancelling = ref(false);
   const error = ref<string | null>(null);
+  const detailsCache = ref<Record<string, JobDetail>>({});
 
   let pollTimer: ReturnType<typeof setInterval> | null = null;
   let pollGeneration = 0;
@@ -40,13 +42,20 @@ export const useActiveJobStore = defineStore('activeJob', () => {
     }
   }
 
+  function cacheDetail(detail: JobDetail): void {
+    detailsCache.value[detail.id] = detail;
+    if (activeJobId.value === detail.id) {
+      jobDetail.value = detail;
+    }
+  }
+
   async function fetchJobDetail(jobId: string, generation: number): Promise<void> {
     try {
       const detail = await jobsApi.getJob(jobId);
       if (generation !== pollGeneration || activeJobId.value !== jobId) {
         return;
       }
-      jobDetail.value = detail;
+      cacheDetail(detail);
       error.value = null;
 
       if (TERMINAL_STATUSES.includes(detail.status)) {
@@ -63,12 +72,15 @@ export const useActiveJobStore = defineStore('activeJob', () => {
   function startPolling(jobId: string): void {
     stopPolling();
     const generation = pollGeneration;
+    const hasCache = jobId in detailsCache.value;
 
-    void (async () => {
-      loading.value = true;
-      await fetchJobDetail(jobId, generation);
-      loading.value = false;
-    })();
+    loading.value = !hasCache;
+
+    void fetchJobDetail(jobId, generation).finally(() => {
+      if (generation === pollGeneration && activeJobId.value === jobId) {
+        loading.value = false;
+      }
+    });
 
     pollTimer = setInterval(() => {
       void fetchJobDetail(jobId, generation);
@@ -76,9 +88,13 @@ export const useActiveJobStore = defineStore('activeJob', () => {
   }
 
   function setActiveJob(jobId: string): void {
+    if (activeJobId.value === jobId) {
+      return;
+    }
+
     activeJobId.value = jobId;
-    jobDetail.value = null;
     error.value = null;
+    jobDetail.value = detailsCache.value[jobId] ?? null;
     startPolling(jobId);
   }
 
@@ -87,27 +103,28 @@ export const useActiveJobStore = defineStore('activeJob', () => {
     activeJobId.value = null;
     jobDetail.value = null;
     error.value = null;
+    loading.value = false;
   }
 
   async function cancelActiveJob(): Promise<void> {
-    if (!activeJobId.value) {
+    if (!activeJobId.value || cancelling.value) {
       return;
     }
 
     const jobId = activeJobId.value;
-    loading.value = true;
     error.value = null;
+    cancelling.value = true;
 
     try {
       const detail = await jobsApi.cancelJob(jobId);
       if (activeJobId.value === jobId) {
-        jobDetail.value = detail;
+        cacheDetail(detail);
         stopPolling();
       }
     } catch (err: unknown) {
       error.value = getErrorMessage(err, 'Не удалось отменить задание');
     } finally {
-      loading.value = false;
+      cancelling.value = false;
     }
   }
 
@@ -115,6 +132,7 @@ export const useActiveJobStore = defineStore('activeJob', () => {
     activeJobId,
     jobDetail,
     loading,
+    cancelling,
     error,
     isTerminal,
     processedCount,

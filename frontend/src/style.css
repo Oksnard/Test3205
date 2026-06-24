@@ -31,6 +31,7 @@ header p {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
   gap: 16px;
+  align-items: start;
 }
 
 .column {
@@ -143,4 +144,59 @@ button:disabled {
   .layout {
     grid-template-columns: 1fr;
   }
+}
+
+.panel-body {
+  position: relative;
+  min-height: 220px;
+}
+
+.panel-body--details {
+  min-height: 320px;
+}
+
+.panel-body__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 8px;
+}
+
+.panel-body__overlay--inline {
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.panel-body.is-dimmed > :not(.panel-body__overlay) {
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.btn-with-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 148px;
+}
+
+.btn-with-icon__slot {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.progress-spinner-slot {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }

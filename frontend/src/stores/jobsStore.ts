@@ -7,10 +7,16 @@ import { getErrorMessage } from '../utils/errors';
 export const useJobsStore = defineStore('jobs', () => {
   const jobs = ref<JobSummary[]>([]);
   const loading = ref(false);
+  const refreshing = ref(false);
   const error = ref<string | null>(null);
 
-  async function fetchJobs(): Promise<void> {
-    loading.value = true;
+  async function fetchJobs(silent = false): Promise<void> {
+    if (silent) {
+      refreshing.value = true;
+    } else {
+      loading.value = jobs.value.length === 0;
+    }
+
     error.value = null;
     try {
       jobs.value = await jobsApi.listJobs();
@@ -18,8 +24,9 @@ export const useJobsStore = defineStore('jobs', () => {
       error.value = getErrorMessage(err, 'Не удалось загрузить список заданий');
     } finally {
       loading.value = false;
+      refreshing.value = false;
     }
   }
 
-  return { jobs, loading, error, fetchJobs };
+  return { jobs, loading, refreshing, error, fetchJobs };
 });
