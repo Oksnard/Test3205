@@ -1,0 +1,50 @@
+# Dependencies
+/node_modules/
+**/node_modules/
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Test & coverage
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+playwright/.cache/
+blob-report/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Package build artifacts (monorepo)
+frontend/dist/
+backend/dist/
+
+# Misc
+.cache/
+.temp/
+tmp/
